@@ -3,27 +3,111 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
         mc:Ignorable="d"
         Title="Simple Web Browser" Height="600" Width="900">
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="200"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
 
-        <ListBox x:Name="LinkListBox"
-                 Grid.Column="0"
-                 Margin="5"
-                 SelectionChanged="LinkListBox_SelectionChanged">
-            <ListBox.ItemTemplate>
-                <DataTemplate>
-                    <TextBlock Text="{Binding Name}"/>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
+    <DockPanel>
+        <Menu DockPanel.Dock="Top" Background="White">
+            <MenuItem Header="Plik">
+                <MenuItem Header="_Importuj Bazę...." Click="ImportDatabase_Click">
+                    <MenuItem.Icon>
+                        <Image Source="https://cdn-icons-png.flaticon.com/512/2906/2906496.png" Width="16"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <Separator/>
+                <MenuItem Header="_Wyjście" Click="Exit_Click" />
+            </MenuItem>
 
-        <WebBrowser x:Name="BrowserControl"
-                    Grid.Column="1"
-                    Margin="5"/>
-    </Grid>
+            <MenuItem Header="_Edycja">
+                <MenuItem Header="_Dodaj nowy link..." Click="AddLink_Click" />
+            </MenuItem>
+
+            <MenuItem Header="_Pomoc">
+                <MenuItem Header="_O programie..." Click="About_Click" />
+            </MenuItem>
+        </Menu>
+
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="250"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <GroupBox Header="Twoje Linki" Grid.Column="0" Margin="5">
+                <ListBox x:Name="LinkListBox" SelectionChanged="LinkListBox_SelectionChanged">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Name}" FontWeight="Bold"/>
+                                <TextBlock Text=" - "/>
+                                <TextBlock Text="{Binding BrowserType}" FontStyle="Italic" Foreground="Gray"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </GroupBox>
+
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <GroupBox Header="Zarządzaj Linkiem" Margin="5">
+                    <StackPanel>
+                        <Label Content="Nazwa strony:"/>
+                        <TextBox x:Name="txtName" Margin="5,0,5,5"/>
+
+                        <Label Content="Adres URL:"/>
+                        <TextBox x:Name="txtUrl" Margin="5,0,5,5"/>
+
+                        <Label Content="Przeglądarka:"/>
+                        <ComboBox x:Name="comboBrowser" Margin="5,0,5,5">
+                            <ComboBoxItem Content="Chrome"/>
+                            <ComboBoxItem Content="Firefox"/>
+                            <ComboBoxItem Content="Opera"/>
+                            <ComboBoxItem Content="Tor"/>
+                        </ComboBox>
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="5">
+                            <Button Content="Dodaj" Click="AddLink_Click" Width="70" Margin="5"/>
+                            <Button Content="Zapisz zmiany" Click="Update_Click" Width="90" Margin="5"/>
+                            <Button Content="Usuń" Click="Delete_Click" Width="70" Margin="5" Background="#FFFFEBEB"/>
+                        </StackPanel>
+                    </StackPanel>
+                </GroupBox>
+
+                <Border Grid.Row="1" BorderBrush="Gray" BorderThickness="1" Margin="5">
+                    <wv2:WebView2 x:Name="MyWebView" Source="https://www.google.com"/>
+                </Border>
+            </Grid>
+
+        </Grid>
+
+        <!--<Grid>
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="200"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <ListBox x:Name="LinkListBox"
+                     Grid.Column="0"
+                     Margin="5"
+                     SelectionChanged="LinkListBox_SelectionChanged">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Name}"/>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <WebBrowser x:Name="BrowserControl"
+                         Grid.Column="1"
+                        Margin="5"/>
+       
+        </Grid>-->
+    </DockPanel>
 </Window>

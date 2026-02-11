@@ -34,5 +34,26 @@ namespace WebLinkBrowserInDesktop.Services
         }
 
         //Insert / Updatte / Delete
+        public void AddLink(WebLinkModel linkModel)
+        {
+            using var connection = new SqliteConnection(_connectionString);
+            string sql = "INSERT INTO Links (Name, Url, BrowserType) " 
+                   + "    VALUES(@Name, @Url, @BrowserType)";
+            connection.Execute(sql, linkModel);
+        }
+
+        public void UpdateLink(WebLinkModel linkModel)
+        {
+            using var connection = new SqliteConnection(_connectionString);
+            string sql = "UPDATE Links SET Name = @Name, Url = @Url, BrowserType = @BrowserType WHERE Id = @Id";
+            connection.Execute(sql, linkModel);
+        }
+
+        public void DeleteLink(int id)
+        {
+            using var connection = new SqliteConnection(_connectionString);
+            string sql = "DELETE FROM Links WHERE Id = @Id";
+            connection.Execute(sql, new { Id = id });
+        }
     }
 }
