@@ -1,4 +1,4 @@
-﻿<Window x:Class="WebLinkBrowserInDesktop.MainWindow"
+﻿<!--<Window x:Class="WebLinkBrowserInDesktop.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -85,29 +85,39 @@
             </Grid>
 
         </Grid>
+    </DockPanel>
+</Window>-->
+    
+<Window x:Class="WebLinkBrowserInDesktop.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+        mc:Ignorable="d"
+        Title="Simple Web Browser" Height="600" Width="900">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
 
-        <!--<Grid>
+        <DockPanel Grid.Column="0" Margin="5">
+            <StackPanel DockPanel.Dock="Bottom">
+                <Button Content="Dodaj Nowy" Click="Add_Click" Margin="0,5"/>
+                <Button Content="Edytuj Wybrany" Click="Update_Click" Margin="0,5"/>
+                <Button Content="Usuń" Click="Delete_Click" Margin="0,5" Background="#FFFFEBEB"/>
+            </StackPanel>
 
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="200"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-
-            <ListBox x:Name="LinkListBox"
-                     Grid.Column="0"
-                     Margin="5"
-                     SelectionChanged="LinkListBox_SelectionChanged">
+            <ListBox x:Name="LinkListBox" SelectionChanged="LinkListBox_SelectionChanged">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
                         <TextBlock Text="{Binding Name}"/>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
+        </DockPanel>
 
-            <WebBrowser x:Name="BrowserControl"
-                         Grid.Column="1"
-                        Margin="5"/>
-       
-        </Grid>-->
-    </DockPanel>
+        <wv2:WebView2 x:Name="MyWebView" Grid.Column="1" Margin="5"/>
+    </Grid>
 </Window>
