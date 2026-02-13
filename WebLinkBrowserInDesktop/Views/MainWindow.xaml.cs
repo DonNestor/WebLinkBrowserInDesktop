@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using System.Windows.Controls;
 using WebLinkBrowserInDesktop.Models;
 using WebLinkBrowserInDesktop.Services;
+using WebLinkBrowserInDesktop.Views;
 
 namespace WebLinkBrowserInDesktop
 {
@@ -20,7 +21,6 @@ namespace WebLinkBrowserInDesktop
 
             _databaseService = databaseService;
 
-            //LoadLinks();
             RefreshLinkList();
         }
 
@@ -50,29 +50,15 @@ namespace WebLinkBrowserInDesktop
         {
             var links = _databaseService.GetAllLinks();
             LinkListBox.ItemsSource = links;
-
-            txtName.Clear();
-            txtUrl.Clear();
-            comboBrowser.SelectedIndex = -1;
         }
 
         private void LinkListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (LinkListBox.SelectedItem is WebLinkModel selectedLink)
             {
-                txtName.Text = selectedLink.Name;
-                txtUrl.Text = selectedLink.Url;
-
-
                 try
                 {
-                    string url = selectedLink.Url;
-                    if(!url.StartsWith("http") || !url.StartsWith("https"))
-                    {
-                        url = "https://" + url;
-                    }
-
-                    MyWebView.Source = new Uri(url);
+                    LoadPage(selectedLink.Url);
                 }
                 catch (Exception ex)
                 {
@@ -81,31 +67,52 @@ namespace WebLinkBrowserInDesktop
             }
         }
 
-        private void AddLink_Click(object sender, RoutedEventArgs e)
+        private void LoadPage(string url)
         {
-            var newLink = new WebLinkModel
+            try
             {
-                Name = txtName.Text,
-                Url = txtUrl.Text,
-                BrowserType = comboBrowser.Text
-            };
+                if (string.IsNullOrEmpty(url)) return;
 
-            _databaseService.AddLink(newLink);
+                MyWebView.Source = new Uri(url);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Błąd ładowania strony: " + ex.Message);
+            }
+        }
 
-            RefreshLinkList();
+        private void Add_Click(object sender, RoutedEventArgs e)
+        {
+            var editWindow = new LinkEditWindow();
+            editWindow.Owner = this;
+
+            if(editWindow.ShowDialog() == true)
+            {
+                _databaseService.AddLink(editWindow.Links);
+                RefreshLinkList();
+            }
         }
 
         private void Update_Click(object sender, RoutedEventArgs e)
         {
-            if (LinkListBox.SelectedItem is WebLinkModel selected)
+            if(LinkListBox.SelectedItem is WebLinkModel selectedLink)
             {
-                selected.Name = txtName.Text;
-                selected.Url = txtUrl.Text;
-                selected.BrowserType = (comboBrowser.SelectedItem as ComboBoxItem)?.Content.ToString();
+                var editWindow = new Views.LinkEditWindow(selectedLink);
+                editWindow.Owner = this;
 
-                _databaseService.UpdateLink(selected);
-                RefreshLinkList();
-                MessageBox.Show("Zaktualizowano dane");
+                if (editWindow.ShowDialog() == true)
+                {
+                    _databaseService.UpdateLink(editWindow.Links);
+                    RefreshLinkList();
+
+
+                    LoadPage(editWindow.Links.Url);
+                }
+            }
+            else
+            {
+                MessageBox.Show("Nie wybrano żadnego linku do edycji.");
+
             }
         }
 
