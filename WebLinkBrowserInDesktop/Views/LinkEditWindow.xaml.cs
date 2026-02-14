@@ -53,8 +53,8 @@ namespace WebLinkBrowserInDesktop.Views
                 url = "https://" + url;
             }
 
-            Links.Name = txtName.Text;
             Links.Url = url;
+            Links.Name = txtName.Text;
             Links.BrowserType = (cbx.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "Chrome";
             
             this.DialogResult = true;
