@@ -19,8 +19,19 @@ namespace WebLinkBrowserInDesktop.Views
 
         private void CreateNewDb_Click(object sender, RoutedEventArgs e)
         {
+            //Download the application folder and create a path to the "Data" subfolder
+            string dataFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Db");
+
+            //Check if the "Data" folder exists, if not, create it
+            if (!Directory.Exists(dataFolder))
+            {
+                Directory.CreateDirectory(dataFolder);
+            }
+
             SaveFileDialog sfd = new SaveFileDialog();
+            sfd.InitialDirectory = dataFolder; // Set the initial directory to the "Data" folder
             sfd.Filter = "Baza danych SQLite (*.db)|*.db";
+            sfd.FileName = "WebLink.db"; // Default file name
             sfd.Title = "Wskaż miejsce zapisu nowej bazy";
 
             if (sfd.ShowDialog() == true)
