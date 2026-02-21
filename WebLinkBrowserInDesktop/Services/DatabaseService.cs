@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Microsoft.Data.Sqlite;
-using System.IO;
+﻿using Microsoft.Data.Sqlite;
 using Dapper;
 using WebLinkBrowserInDesktop.Models;
 
@@ -11,49 +7,93 @@ namespace WebLinkBrowserInDesktop.Services
 {
     public class DatabaseService
     {
-        private string _connectionString;
+        private SqliteConnection _connection;
 
         public void Initialize(string dbPath)
         {
-            _connectionString = $"Data Source={dbPath}";
+            CloseConection();
+            string connectionString = $"Data Source={dbPath}";
+            
+            _connection = new SqliteConnection(connectionString);
+            _connection.Open();
 
-            using var connection = new SqliteConnection(_connectionString);
-            connection.Execute(@"
+            InitializeTables();
+        }
+
+        private void InitializeTables()
+        {
+            string sql = @"
                 CREATE TABLE IF NOT EXISTS Links (
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
                 Name TEXT NOT NULL,
                 Url TEXT NOT NULL,
                 BrowserType TEXT NOT NULL
-                )");
+                )";
+
+            using (var command = new SqliteCommand(sql, _connection))
+            {
+                command.ExecuteNonQuery();
+            }
         }
+
+        public void CloseConection()
+        {
+            if (_connection != null)
+            {
+                try
+                {
+                    // Close the connection
+                    if (_connection.State == System.Data.ConnectionState.Open)
+                    {
+                        _connection.Close();
+                    }
+
+                    // Destroy the object (we release resources)
+                    _connection.Dispose();
+                    _connection = null;
+
+                    //Force garbage collection to ensure SQLite releases the file. 
+                    // This helps with "Database is locked" errors when switching quickly.
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error closing database {ex.Message}");
+                }
+            }
+        }
+
 
         public List<WebLinkModel> GetAllLinks() 
         {
-            using var connection = new SqliteConnection(_connectionString);
-            return connection.Query<WebLinkModel>("SELECT * FROM Links").ToList();
+            if (_connection.State != System.Data.ConnectionState.Open)
+            {
+                _connection.Open();
+            }
+
+            return _connection.Query<WebLinkModel>("SELECT * FROM Links").ToList();
         }
 
-        //Insert / Updatte / Delete
+        //Insert / Update / Delete
         public void AddLink(WebLinkModel linkModel)
         {
-            using var connection = new SqliteConnection(_connectionString);
             string sql = "INSERT INTO Links (Name, Url, BrowserType) " 
                    + "    VALUES(@Name, @Url, @BrowserType)";
-            connection.Execute(sql, linkModel);
+            _connection.Execute(sql, linkModel);
         }
 
         public void UpdateLink(WebLinkModel linkModel)
         {
-            using var connection = new SqliteConnection(_connectionString);
             string sql = "UPDATE Links SET Name = @Name, Url = @Url, BrowserType = @BrowserType WHERE Id = @Id";
-            connection.Execute(sql, linkModel);
+            _connection.Execute(sql, linkModel);
         }
 
         public void DeleteLink(int id)
         {
-            using var connection = new SqliteConnection(_connectionString);
             string sql = "DELETE FROM Links WHERE Id = @Id";
-            connection.Execute(sql, new { Id = id });
+            _connection.Execute(sql, new { Id = id });
         }
+
     }
 }

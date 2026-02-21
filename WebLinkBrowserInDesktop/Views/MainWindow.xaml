@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
         mc:Ignorable="d"
-        Title="Simple Web Browser" Height="600" Width="900">
+        Title="Links Browser" Height="600" Width="900">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="200"/>
@@ -14,29 +14,36 @@
 
         <DockPanel Grid.Column="0" Margin="5">
             <Menu DockPanel.Dock="Top" Background="White">
-                <MenuItem Header="Plik">
-                    <MenuItem Header="_Importuj Bazę...." Click="ImportDatabase_Click">
+                <MenuItem Header="File">
+                    <MenuItem Header="_Import Database...." Click="ImportDatabase_Click">
                         <MenuItem.Icon>
                             <Image Source="https://cdn-icons-png.flaticon.com/512/2906/2906496.png" Width="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
+                    <MenuItem Header="_Profiles">
+                        <MenuItem Header="_Manage profiles..." Click="ProfileManager_Click" />
+                    </MenuItem>
                     <Separator/>
-                    <MenuItem Header="_Wyjście" Click="Exit_Click" />
+                    <MenuItem Header="_Settings...." Click="SettingsMenu_Click" />
+                    <Separator />
+                    <MenuItem Header="_Exit" Click="Exit_Click" />
                 </MenuItem>
 
-                <MenuItem Header="_Edycja">
-                    <MenuItem Header="_Dodaj nowy link..." Click="Add_Click" />
+                <MenuItem Header="_Edition">
+                    <MenuItem Header="_Add new link..." Click="Add_Click" />
+                    <MenuItem Header="_Edit selected link..." Click="Update_Click" />
+                    <MenuItem Header="_Delete selected link..." Click="Delete_Click" />
                 </MenuItem>
 
-                <MenuItem Header="_Pomoc">
-                    <MenuItem Header="_O programie..." Click="About_Click" />
+                <MenuItem Header="_About">
+                    <MenuItem Header="_About the program..." Click="About_Click" />
                 </MenuItem>
             </Menu>
 
             <StackPanel DockPanel.Dock="Bottom">
-                <Button Content="Dodaj Nowy" Click="Add_Click" Margin="0,5"/>
-                <Button Content="Edytuj Wybrany" Click="Update_Click" Margin="0,5"/>
-                <Button Content="Usuń" Click="Delete_Click" Margin="0,5" Background="#FFFFEBEB"/>
+                <Button Content="Add new" Click="Add_Click" Margin="0,5"/>
+                <Button Content="Edit selected" Click="Update_Click" Margin="0,5"/>
+                <Button Content="Delete selected" Click="Delete_Click" Margin="0,5" Background="#FFFFEBEB"/>
             </StackPanel>
 
             <ListBox x:Name="LinkListBox" SelectionChanged="LinkListBox_SelectionChanged">
@@ -55,17 +62,17 @@
             </Grid.RowDefinitions>
 
             <ToolBar Grid.Row="0">
-                <Button Content="⬅" Click="Back_Click" ToolTip="Wstecz" Padding="5,0"/>
-                <Button Content="➡" Click="Forward_Click" ToolTip="Dalej" Padding="5,0"/>
-                <Button Content="🔄" Click="Reload_Click" ToolTip="Odśwież" Padding="5,0"/>
+                <Button Content="⬅" Click="Back_Click" ToolTip="Back" Padding="5,0"/>
+                <Button Content="➡" Click="Forward_Click" ToolTip="Forward" Padding="5,0"/>
+                <Button Content="🔄" Click="Reload_Click" ToolTip="Reload" Padding="5,0"/>
                 <Separator />
                 <TextBox x:Name="txtCurrentUrl" Width="400" VerticalAlignment="Center" 
                  KeyDown="txtCurrentUrl_KeyDown" Margin="5,0"/>
-                <Button Content="Go" Click="Go_Click" Padding="10,0" ToolTip="Przejdź do strony"/>
+                <Button Content="Go" Click="Go_Click" Padding="10,0" ToolTip="Go to website"/>
                 <Separator />
-                <Button Content="💾" Click="SaveLink_Click" Padding="10,0" ToolTip="Zapisz link do strony"  />
+                <Button Content="💾" Click="SaveLink_Click" Padding="10,0" ToolTip="Save the link"  />
                 <Separator />
-                <Button Click="OpenExternal_Click" ToolTip="Otwórz w domyślnej przeglądarce">
+                <Button Click="OpenExternal_Click" ToolTip="Open is default browser">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="🌐" Margin="0,0,5,0"/>
                     </StackPanel>

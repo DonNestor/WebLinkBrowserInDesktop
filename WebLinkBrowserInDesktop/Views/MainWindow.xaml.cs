@@ -1,12 +1,13 @@
-﻿using Microsoft.Win32;
+﻿using System.Diagnostics;
+using Microsoft.Win32;
 using System.Windows;
 using Newtonsoft.Json;
 using System.Windows.Controls;
 using WebLinkBrowserInDesktop.Models;
 using WebLinkBrowserInDesktop.Services;
 using WebLinkBrowserInDesktop.Views;
-using System.Diagnostics;
-using System.IO.Enumeration;
+using System.IO;
+using System.Runtime.CompilerServices;
 
 namespace WebLinkBrowserInDesktop
 {
@@ -24,10 +25,12 @@ namespace WebLinkBrowserInDesktop
             _currentConfig = appConfig;
             _databaseService = databaseService;
 
-            this.Title = $"Przeglądarka Linków - Profil: {_currentConfig.LastUser ?? "Domyślny"}";
+            this.Title = $"Links Browser - Profile: {_currentConfig.LastUser ?? "Default"}"; 
 
             InitializeBrowser();
             RefreshLinkList();
+
+            this.Closed += MainWindow_Closed;
         }
 
         private async void InitializeBrowser()
@@ -35,21 +38,49 @@ namespace WebLinkBrowserInDesktop
             await MyWebView.EnsureCoreWebView2Async();
         }
 
+        private void MainWindow_Closed(object sender, EventArgs e)
+        {
+            _databaseService.CloseConection();
+            Application.Current.Shutdown();
+        }
+
         #region Load & Refresh
         private void ImportDatabase_Click(object sender, RoutedEventArgs e)
         {
             OpenFileDialog ofd = new OpenFileDialog();
-            ofd.Filter = "Baza danych SQLite (*.db)|*.db";
-            ofd.Title = "Wybierz bazę danych do zaimportowania";
+            ofd.Filter = "Database SQLite (*.db)|*.db"; 
+            ofd.Title = "Choose a database to import"; 
 
             if (ofd.ShowDialog() == true)
             {
                 string newDbPath = ofd.FileName;
 
-                string configPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "cofig.json");
+                if (newDbPath == _currentConfig.DatabasePath)
+                {
+                    MessageBox.Show("Choosed database is already in use.");
+                    return;
+                }
 
-                AppConfig config = new AppConfig { DatabasePath = newDbPath };
-                string json = JsonConvert.SerializeObject(config, Formatting.Indented);
+                try
+                {
+                    _databaseService.CloseConection();
+
+                    _currentConfig.DatabasePath = newDbPath;
+                    string configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.json");
+                    string json = JsonConvert.SerializeObject(_currentConfig, Formatting.Indented);
+                    File.WriteAllText(configPath, json);
+
+                    _databaseService.Initialize(newDbPath);
+
+                    RefreshLinkList();
+                    UpdateTitle();
+
+                    MessageBox.Show("Successfully loaded new database!"); 
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error while importing databas: {ex.Message}");
+                }
             }
         }
         private void RefreshLinkList()
@@ -68,7 +99,7 @@ namespace WebLinkBrowserInDesktop
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Niepoprawny format adresu URL: " + ex.Message);
+                    MessageBox.Show("Incorrect URL format: " + ex.Message);
                 }
             }
         }
@@ -83,7 +114,7 @@ namespace WebLinkBrowserInDesktop
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Błąd ładowania strony: " + ex.Message);
+                MessageBox.Show("Page loading error: " + ex.Message);
             }
         }
         #endregion
@@ -118,7 +149,7 @@ namespace WebLinkBrowserInDesktop
             }
             else
             {
-                MessageBox.Show("Nie wybrano żadnego linku do edycji.");
+                MessageBox.Show("No link selected for editing.");
             }
         }
 
@@ -126,12 +157,12 @@ namespace WebLinkBrowserInDesktop
         {
             if (LinkListBox.SelectedItem is WebLinkModel selected)
             {
-                var result = MessageBox.Show($"Czy na pewno usunać {selected.Name}", "Potwierdzenie", MessageBoxButton.YesNo);
+                var result = MessageBox.Show($"Are you sure you want to delete {selected.Name}", "Confirmation", MessageBoxButton.YesNo);
                 if (result == MessageBoxResult.Yes)
                 {
                     _databaseService.DeleteLink(selected.Id);
                     RefreshLinkList();
-                    MessageBox.Show("Usunięto dane");
+                    MessageBox.Show("Data deleted");
                 }
             }
         }
@@ -176,15 +207,15 @@ namespace WebLinkBrowserInDesktop
             string currentUrl = MyWebView.Source?.ToString() ?? "";
             if(string.IsNullOrEmpty(currentUrl))
             {
-                MessageBox.Show("Nie mozna zapisać pustego adresu URL.");
+                MessageBox.Show("Cannot save empty URL.");
                 return;
             }
 
             var newLink = new WebLinkModel
             {
-                Name = currentUrl, // Można tu dodać logikę do generowania nazwy na podstawie URL lub pozostawić puste
+                Name = currentUrl,  
                 Url = currentUrl,
-                BrowserType = "Chrome" // Można tu dodać logikę do określania typu przeglądarki, jeśli jest taka potrzeba
+                BrowserType = "Chrome" 
             };
 
             _databaseService.AddLink(newLink);
@@ -207,37 +238,41 @@ namespace WebLinkBrowserInDesktop
         {
             try
             {
-                string fileName = "";
+                string exePath = "";
 
-                switch(browserType)
+                if (_currentConfig.BrowserPaths.TryGetValue(browserType, out string savePath) && !string.IsNullOrWhiteSpace(savePath))
+
                 {
-                    case "Chrome":
-                        fileName = "chrome.exe";
-                        break;
-                    case "Opera":
-                        fileName = "opera.exe";
-                        break;
-                    case "Firefox":
-                        fileName = "filefox.exe";
-                        break;
-                    case "Tor":
-                        fileName = "tor.exe";
-                        break;
-                    default:
-                        OpenUrlInDefaultBrowser(url);
-                        break;
+                    exePath = savePath;
+                }
+                else
+                {
+                    exePath = browserType switch
+                    {
+                        "Chrome" => "chrome.exe",
+                        "Opera" => "opera.exe",
+                        "Firefox" => "firefox.exe",
+                        "Tor" => "tor.exe",
+                        _ => ""
+                    };
+                }
+
+                if(string.IsNullOrEmpty(exePath))
+                {
+                    OpenUrlInDefaultBrowser(url);
+                    return;
                 }
 
                 Process.Start(new ProcessStartInfo
                 {
-                    FileName = fileName,
+                    FileName = exePath,
                     Arguments = url,
                     UseShellExecute = true
                 });
             }
-            catch (Exception ex)
+            catch 
             {
-                MessageBox.Show("Nie udało się otworzyć przeglądarki: " + ex.Message);
+                OpenUrlInDefaultBrowser(url);
             }
         }
 
@@ -253,16 +288,100 @@ namespace WebLinkBrowserInDesktop
             }
             catch (Exception ex) 
             {
-                MessageBox.Show("Nie udało się otworzyć przeglądarki: " + ex.Message);
+                MessageBox.Show("Failed to open browser: " + ex.Message);
             }
         }
         #endregion
 
+        public void UpdateTitle()
+        {
+            this.Title = $"Links Browser - Profile: {_currentConfig.LastUser ?? "Default"} | Database: {Path.GetFileName(_currentConfig.DatabasePath)}";
+        }
+
+        private void SettingsMenu_Click(object sender, RoutedEventArgs e)
+        {
+            var settingsWin = new Views.SettingsWindow(_currentConfig);
+            settingsWin.Owner = this;
+
+            if(settingsWin.ShowDialog() == true)
+            {
+                try
+                {
+                    string configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.json");
+                    string json = JsonConvert.SerializeObject(_currentConfig, Formatting.Indented);
+                    File.WriteAllText(configPath, json);
+
+                    UpdateTitle();
+                    MessageBox.Show("The configuration has been saved.");
+
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Error saving settings: " + ex.Message);
+                }
+            }
+        }
+        private void ProfileManager_Click(object sender, RoutedEventArgs e)
+        {
+            var manager = new ProfileManagerWindow();
+            manager.Owner = this;
+
+            if(manager.ShowDialog() == true)
+            {
+                LoadProfile(manager.SelectedProfilePath);
+            }
+        }
+
+        private void LoadProfile(string configPath)
+        {
+            try
+            {
+                string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+                string jsonContent = File.ReadAllText(configPath);
+                var newConfig = JsonConvert.DeserializeObject<AppConfig>(jsonContent);
+
+                if (newConfig == null)
+                {
+                    throw new Exception("Empty config file."); 
+                }
+
+                _databaseService.CloseConection();
+
+                //Changing reference to new config object loaded from selected profile
+                _currentConfig = newConfig;
+
+                //Initialize now database connection with new path from loaded profile
+                _databaseService.Initialize(_currentConfig.DatabasePath);
 
 
+                var launcherConfig = new LauncherConfig()
+                {
+                    LastActiveProfilePath = configPath
+                };
+
+                //Serialize the launcher configuration to JSON with indentation for readability
+                string jsonState = JsonConvert.SerializeObject(launcherConfig, Formatting.Indented);
+
+                //Save state to file active_profile.txt - to remember which profile to load next time
+                string activeProfileInfo = Path.Combine(baseDir, "active_profile.txt");
+                File.WriteAllText(activeProfileInfo, jsonState);
+
+                RefreshLinkList();
+                UpdateTitle();
+
+                MyWebView.Source = new Uri("about:blank");
+                txtCurrentUrl.Text = "";
+
+                MessageBox.Show($"Switched to profile: {_currentConfig.LastUser}", "Success");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading profile: {ex.Message}", "Error");
+            }
+        }
         private void About_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("WebLinkBrowserInDesktop\nWersja 1.0\nAutor: Your Name", "O programie");
+            MessageBox.Show("LinksBrowser\nVersion 1.0\nAutor: ZB", "About...");
         }
 
         private void Exit_Click(object sender, RoutedEventArgs e)

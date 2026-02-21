@@ -5,16 +5,16 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WebLinkBrowserInDesktop.Views"
         mc:Ignorable="d"
-        Title="Edycja linku" Height="450" Width="800" WindowStartupLocation="CenterOwner">
+        Title="Edit link" Height="450" Width="800" WindowStartupLocation="CenterOwner">
     <Grid Margin="15">
         <StackPanel>
-            <Label Content="Nazwa strony: " />
+            <Label Content="Page name: " />
             <TextBox x:Name="txtName" Margin="0,0,0,10"/>
 
             <Label Content="URL: " />
             <TextBox x:Name="txtUrl" Margin="0,0,0,10"/>
 
-            <Label Content="Przeglądarka: " />
+            <Label Content="Browser: " />
             <ComboBox x:Name="cbx" Margin="0,0,0,15">
                 <ComboBoxItem Content="Chrome"/>
                 <ComboBoxItem Content="Opera"/>
@@ -23,8 +23,8 @@
             </ComboBox>
 
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="Zapisz" Click="Save_Click" Width="80" Margin="5.0"/>
-                <Button Content="Anuluj" Click="Cancel_Click" Width="80" Margin="5.0"/>
+                <Button Content="Save" Click="Save_Click" Width="80" Margin="5.0"/>
+                <Button Content="Cancel" Click="Cancel_Click" Width="80" Margin="5.0"/>
             </StackPanel>
         </StackPanel>
     </Grid>
