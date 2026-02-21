@@ -1,0 +1,46 @@
+﻿<Window x:Class="WebLinkBrowserInDesktop.Views.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Settings application" Height="350" Width="450" WindowStartupLocation="CenterOwner">
+    <Grid Margin="15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0">
+            <GroupBox Header="User Profile" Margin="0,0,0,10">
+                <StackPanel Margin="10">
+                    <Label Content="Profile name:"/>
+                    <TextBox x:Name="txtUserName"/>
+                </StackPanel>
+            </GroupBox>
+
+            <GroupBox Header="Browser Location" Margin="0,10,0,0">
+                <ScrollViewer Height="150">
+                    <ItemsControl x:Name="BrowsersItemsControl">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,5">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="80" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                                    <TextBox Text="{Binding Path, Mode=TwoWay}" Grid.Column="1" IsReadOnly="True" Background="#F9F9F9" Margin="5,0"/>
+                                    <Button Content="..." Grid.Column="2" Width="30" Click="BrowsePath_Click" Margin="5,0,0,0" Tag="{Binding Name}"/> 
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </GroupBox>
+        </StackPanel>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+            <Button Content="Save" Width="80" Click="SaveSettings_Click" Margin="5,0"/>
+            <Button Content="Cancel" Width="80" IsCancel="True"/>
+        </StackPanel>
+    </Grid>
+</Window>

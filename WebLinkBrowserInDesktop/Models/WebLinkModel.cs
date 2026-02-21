@@ -29,7 +29,7 @@ namespace WebLinkBrowserInDesktop.Models
 
         private string FormatNameFromUrl(string url)
         {
-            if (string.IsNullOrEmpty(url)) return "Nieznany Link";
+            if (string.IsNullOrEmpty(url)) return "Unknown Link";
 
             string cleanName = url;
 
