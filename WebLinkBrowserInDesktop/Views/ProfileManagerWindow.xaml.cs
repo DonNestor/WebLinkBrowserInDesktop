@@ -1,13 +1,10 @@
 ﻿using System.IO;
 using System.Windows;
-using System.Windows.Markup;
-using Newtonsoft.Json;
-using WebLinkBrowserInDesktop.Models;
 
 namespace WebLinkBrowserInDesktop.Views
 {
     /// <summary>
-    /// Logika interakcji dla klasy ProfileManagerWindow.xaml
+    /// Logic for ProfileManagerWindow.xaml
     /// </summary>
     public partial class ProfileManagerWindow : Window
     {
@@ -22,7 +19,7 @@ namespace WebLinkBrowserInDesktop.Views
 
             if(!Directory.Exists(_profilesDir))
             {
-                Directory.CreateDirectory(_profilesDir); // Refactor this function - there is also a way to create this in App.xaml.cs.
+                Directory.CreateDirectory(_profilesDir); 
             }
 
             RefreshProfiles();
@@ -33,7 +30,6 @@ namespace WebLinkBrowserInDesktop.Views
             var files = Directory.GetFiles(_profilesDir, "*.json");
             ProfilesListBox.ItemsSource = files.Select(Path.GetFileName).ToList();
         }
-
         private void NewProfile_Click(object sender, RoutedEventArgs e)
         {
             var newProfileWindow = new NewProfileWindow();
@@ -45,7 +41,36 @@ namespace WebLinkBrowserInDesktop.Views
                 MessageBox.Show("Profile created successfully. You can now select it from the list and load it.");
             }
         }
+        private void EditProfile_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProfilesListBox.SelectedItem != null)
+            {
+                string selectedJsonPath = Path.Combine(_profilesDir, ProfilesListBox.SelectedItem.ToString());
 
+                if(selectedJsonPath.ToLower().Contains("template") || selectedJsonPath.ToLower().Contains("default"))
+                {
+                    MessageBox.Show("Unable to edit the main system profile or template profiles.");
+                    return;
+                }
+
+                var editProfile = new EditProfileWindow(selectedJsonPath);
+                editProfile.Owner = this;
+
+                if(editProfile.IsLoadSuccessful)
+                {
+                    if(editProfile.ShowDialog() == true)
+                    {
+                        SelectedProfilePath = editProfile.EditedConfigPath;
+                        RefreshProfiles();
+                        MessageBox.Show("Profile updated successfully.");
+                    }
+                }
+            }
+            else
+            {
+                MessageBox.Show("Please select a profile to edit.");
+            }
+        }
         private void LoadProfile_Click(object sender, RoutedEventArgs e)
         {
             if (ProfilesListBox.SelectedItem != null)
@@ -54,7 +79,6 @@ namespace WebLinkBrowserInDesktop.Views
                 this.DialogResult = true;
             }
         }
-
         private void DeleteProfile_Click(object sender, RoutedEventArgs args)
         {
             if (ProfilesListBox.SelectedItem != null)

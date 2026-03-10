@@ -10,16 +10,15 @@ namespace WebLinkBrowserInDesktop.Views
     /// </summary>
     public partial class SettingsWindow : Window
     {
-        private AppConfig _currentConfig;
+        private AppConfigModel _currentConfig;
 
-        public List<BrowserItem> EditableBrowser { get; set; }
-
-        public SettingsWindow(AppConfig currentConfig)
+        public List<BrowserItemModel> EditableBrowser { get; set; }
+        public SettingsWindow(AppConfigModel currentConfig)
         {
             InitializeComponent();
             _currentConfig = currentConfig;
 
-            EditableBrowser = _currentConfig.BrowserPaths.Select(x => new BrowserItem
+            EditableBrowser = _currentConfig.BrowserPaths.Select(x => new BrowserItemModel
             {
                 Name = x.Key,
                 Path = x.Value
@@ -28,7 +27,6 @@ namespace WebLinkBrowserInDesktop.Views
             txtUserName.Text = _currentConfig.LastUser;
             BrowsersItemsControl.ItemsSource = EditableBrowser;
         }
-
         private void BrowsePath_Click(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
@@ -43,7 +41,6 @@ namespace WebLinkBrowserInDesktop.Views
                 BrowsersItemsControl.ItemsSource = _currentConfig.BrowserPaths.ToList();
             }
         }
-
         private void SaveSettings_Click(object sender, RoutedEventArgs e)
         {
             _currentConfig.LastUser = txtUserName.Text;
