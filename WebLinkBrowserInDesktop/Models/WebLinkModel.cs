@@ -1,13 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
+﻿
 namespace WebLinkBrowserInDesktop.Models
 {
     public class WebLinkModel
     {
         private string _name;
         public int Id { get; set; }
+        public int? CategoryId { get; set; }
         public string Name 
         { 
             get => _name;
@@ -25,7 +23,6 @@ namespace WebLinkBrowserInDesktop.Models
         }
         public string Url { get; set; }
         public string BrowserType { get; set; }
-
 
         private string FormatNameFromUrl(string url)
         {

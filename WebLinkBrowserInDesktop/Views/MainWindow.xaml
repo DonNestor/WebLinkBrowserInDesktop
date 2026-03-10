@@ -4,16 +4,21 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+        xmlns:models="clr-namespace:WebLinkBrowserInDesktop.Models"
         mc:Ignorable="d"
-        Title="Links Browser" Height="600" Width="900">
+        Title="WebLink Browser" Height="600" Width="1000" WindowStartupLocation="CenterScreen">
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="200"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
-        <DockPanel Grid.Column="0" Margin="5">
-            <Menu DockPanel.Dock="Top" Background="White">
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="300"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Menu Grid.Column="0" Background="#F0F0F0" Padding="5">
                 <MenuItem Header="File">
                     <MenuItem Header="_Import Database...." Click="ImportDatabase_Click">
                         <MenuItem.Icon>
@@ -29,10 +34,10 @@
                     <MenuItem Header="_Exit" Click="Exit_Click" />
                 </MenuItem>
 
-                <MenuItem Header="_Edition">
-                    <MenuItem Header="_Add new link..." Click="Add_Click" />
-                    <MenuItem Header="_Edit selected link..." Click="Update_Click" />
-                    <MenuItem Header="_Delete selected link..." Click="Delete_Click" />
+                <MenuItem Header="_Edit">
+                    <MenuItem Header="_Add new link..." Click="AddLink_Click" />
+                    <MenuItem Header="_Edit selected link..." Click="EditLink_Click" />
+                    <MenuItem Header="_Delete selected link..." Click="DeleteLink_Click" />
                 </MenuItem>
 
                 <MenuItem Header="_About">
@@ -40,34 +45,12 @@
                 </MenuItem>
             </Menu>
 
-            <StackPanel DockPanel.Dock="Bottom">
-                <Button Content="Add new" Click="Add_Click" Margin="0,5"/>
-                <Button Content="Edit selected" Click="Update_Click" Margin="0,5"/>
-                <Button Content="Delete selected" Click="Delete_Click" Margin="0,5" Background="#FFFFEBEB"/>
-            </StackPanel>
-
-            <ListBox x:Name="LinkListBox" SelectionChanged="LinkListBox_SelectionChanged">
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <TextBlock Text="{Binding Name}"/>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
-        </DockPanel>
-
-        <Grid Grid.Column="1">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
-
-            <ToolBar Grid.Row="0">
+            <ToolBar Grid.Column="1">
                 <Button Content="⬅" Click="Back_Click" ToolTip="Back" Padding="5,0"/>
                 <Button Content="➡" Click="Forward_Click" ToolTip="Forward" Padding="5,0"/>
                 <Button Content="🔄" Click="Reload_Click" ToolTip="Reload" Padding="5,0"/>
                 <Separator />
-                <TextBox x:Name="txtCurrentUrl" Width="400" VerticalAlignment="Center" 
-                 KeyDown="txtCurrentUrl_KeyDown" Margin="5,0"/>
+                <TextBox x:Name="txtCurrentUrl" Width="400" VerticalAlignment="Center" KeyDown="txtCurrentUrl_KeyDown" Margin="5,0"/>
                 <Button Content="Go" Click="Go_Click" Padding="10,0" ToolTip="Go to website"/>
                 <Separator />
                 <Button Content="💾" Click="SaveLink_Click" Padding="10,0" ToolTip="Save the link"  />
@@ -78,9 +61,123 @@
                     </StackPanel>
                 </Button>
             </ToolBar>
+        </Grid>
 
-            <wv2:WebView2 x:Name="MyWebView" Grid.Row="1" Margin="5"
-                  SourceChanged="MyWebView_SourceChanged"/>
+        <Grid Grid.Row="1" Margin="10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="250" MinWidth="150" />
+                <ColumnDefinition Width="5" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                    <Menu Background="#F0F0F0" Padding="10">
+                        <MenuItem Header="Links" Margin="5,0" Width="100" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <MenuItem Header="Add new link..." Click="AddLink_Click"/>
+                            <MenuItem Header="Edit selected link..." Click="EditLink_Click"/>
+                            <MenuItem Header="Delete selected link..." Click="DeleteLink_Click"/>
+                        </MenuItem>
+                        <MenuItem Header="Categories" Margin="5,0" Width="100" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <MenuItem Header="Add new category..." Click="AddCategory_Click"/>
+                            <MenuItem Header="Edit category..." Click="EditCategory_Click"/>
+                            <MenuItem Header="Delete category..." Click="DeleteCategory_Click"/>
+                        </MenuItem>
+                    </Menu>
+                </StackPanel>
+
+                <TreeView x:Name="CategoriesTree" Grid.Row="1" SelectedItemChanged="CategoriesTree_SelectedItemChanged" BorderBrush="#CCCCCC" BorderThickness="1">
+                    <TreeView.Resources>
+                        <HierarchicalDataTemplate DataType="{x:Type models:CategoryModel}" ItemsSource="{Binding Items}">
+                            <StackPanel Orientation="Horizontal" Margin="2">
+                                <TextBlock Text="📁" Margin="0,0,5,0" Foreground="Goldenrod"/>
+                                <TextBlock Text="{Binding Name}" FontWeight="Bold" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </HierarchicalDataTemplate>
+
+                        <DataTemplate DataType="{x:Type models:WebLinkModel}">
+                            <StackPanel Orientation="Horizontal" Margin="2">
+                                <TextBlock Text="🌐" Margin="0,0,5,0" Foreground="SteelBlue"/>
+                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding BrowserType, StringFormat='  [{0}]'}" Foreground="Gray" FontSize="10" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </TreeView.Resources>
+                </TreeView>
+            </Grid>
+
+            <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" Background="#E0E0E0" Margin="0,0,5,0" Cursor="SizeWE"/>
+
+            <Grid Grid.Column="2" Margin="5,0,0,0">
+
+                <Grid x:Name="CategoryViewGrid" Visibility="Visible">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <ListBox x:Name="LinkListBox" Grid.Row="1" BorderBrush="#CCCCCC" BorderThickness="1">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="5">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="14" Grid.Row="0"/>
+                                    <StackPanel Orientation="Horizontal" Grid.Row="1" Margin="0,2,0,0">
+                                        <TextBlock Text="{Binding Url}" Foreground="Blue" FontSize="12"/>
+                                        <TextBlock Text="  |  " Foreground="Gray" FontSize="12"/>
+                                        <TextBlock Text="{Binding BrowserType}" Foreground="Gray" FontSize="12"/>
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+
+                <Grid x:Name="LinkDetailGrid" Visibility="Collapsed">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" Background="#F5F5F5" BorderBrush="#CCCCCC" BorderThickness="1" Padding="5" Margin="0,0,0,5">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                <TextBlock Text="Name:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                <TextBox x:Name="txtEditLinkName" Width="150" Height="24" VerticalContentAlignment="Center"/>
+
+                                <TextBlock Text="URL:" VerticalAlignment="Center" Margin="10,0,5,0"/>
+                            </StackPanel>
+
+                            <TextBox x:Name="txtEditLinkUrl" Grid.Column="1" Height="24" Margin="0,0,10,0" VerticalContentAlignment="Center"/>
+
+                            <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                <TextBlock Text="Category:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                <ComboBox x:Name="cmbEditLinkCategory" Width="130" Height="24" Margin="0,0,10,0" 
+                                            DisplayMemberPath="Name" SelectedValuePath="Id"/>
+
+                                <Button Content="Save changes" Width="90" Height="24" Click="SaveLinkChanges_Click"/>
+                                <Button Content="Open externally" Width="120" Height="24" Margin="5,0,0,0" Click="OpenExternal_Click"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <wv2:WebView2 x:Name="MainWebView" Grid.Row="1"/>
+                </Grid>
+            </Grid>
         </Grid>
     </Grid>
 </Window>

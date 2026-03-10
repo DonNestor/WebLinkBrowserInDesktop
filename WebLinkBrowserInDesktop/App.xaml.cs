@@ -4,6 +4,7 @@ using System.Windows;
 using WebLinkBrowserInDesktop.Models;
 using WebLinkBrowserInDesktop.Services;
 using WebLinkBrowserInDesktop.Views;
+using WebLinkBrowserInDesktop.Helpers;
 
 namespace WebLinkBrowserInDesktop
 {
@@ -13,7 +14,7 @@ namespace WebLinkBrowserInDesktop
     public partial class App : Application
     {
         private string _configPath;
-        private AppConfig _config;
+        private AppConfigModel _config;
         private DatabaseService _databaseService;
 
         protected override void OnStartup(StartupEventArgs e)
@@ -42,11 +43,12 @@ namespace WebLinkBrowserInDesktop
             string templateConfigPath = Path.Combine(templateDir, "default_template.json");
             if (!File.Exists(templateConfigPath))
             {
-                var defaultConfig = new AppConfig
+                var defaultConfig = new AppConfigModel
                 {
                     LastUser = "New user"
                 };
-                File.WriteAllText(templateConfigPath, JsonConvert.SerializeObject(defaultConfig, Formatting.Indented));
+                FileHelper.SafeWriteConfig(templateConfigPath, defaultConfig);
+
             }
 
             //By default, we set the configuration path to "default.json" in the Profiles folder
@@ -58,7 +60,7 @@ namespace WebLinkBrowserInDesktop
                 try
                 {
                     string fileContent = File.ReadAllText(activeProfileFile);
-                    var launcherState = JsonConvert.DeserializeObject<LauncherConfig>(fileContent);
+                    var launcherState = JsonConvert.DeserializeObject<LauncherConfigModel>(fileContent);
 
                     if (launcherState != null && File.Exists(launcherState.LastActiveProfilePath))
                     {
@@ -100,13 +102,13 @@ namespace WebLinkBrowserInDesktop
                     _config.DatabasePath = newProfileWindow.CreatedConfigPath;
 
                     string json = File.ReadAllText(_configPath);
-                    _config = JsonConvert.DeserializeObject<AppConfig>(json) ?? new AppConfig();
+                    _config = JsonConvert.DeserializeObject<AppConfigModel>(json) ?? new AppConfigModel();
 
-                    var launcherState = new LauncherConfig
+                    var launcherState = new LauncherConfigModel
                     {
                         LastActiveProfilePath = _configPath
                     };
-                    File.WriteAllText(Path.Combine(baseDir, "avtive_profile.json"), JsonConvert.SerializeObject(launcherState));
+                    FileHelper.SafeWriteConfig(Path.Combine(baseDir, "avtive_profile.json"), JsonConvert.SerializeObject(launcherState));
 
                     // Save the selected path to config.json
                     SaveConfig();
@@ -149,18 +151,18 @@ namespace WebLinkBrowserInDesktop
             {
                 try
                 {
-                    _config = JsonConvert.DeserializeObject<AppConfig>(File.ReadAllText(_configPath)) ?? new AppConfig();
+                    _config = JsonConvert.DeserializeObject<AppConfigModel>(File.ReadAllText(_configPath)) ?? new AppConfigModel();
                 }
                 catch
                 {
                     // If there's an error reading/parsing the config, create a new one with defaults
-                    _config = new AppConfig();
+                    _config = new AppConfigModel();
                 }
             }
             else
             {
                 //First launch ever, create default config
-                _config = new AppConfig();
+                _config = new AppConfigModel();
             }
         }
 
@@ -176,8 +178,7 @@ namespace WebLinkBrowserInDesktop
                     return; // Don't save if it's a template or default config
                 }
 
-                string json = JsonConvert.SerializeObject(_config, Formatting.Indented);
-                File.WriteAllText(_configPath, json);
+                FileHelper.SafeWriteConfig(_configPath, _config);
             }
             catch (Exception ex)
             {

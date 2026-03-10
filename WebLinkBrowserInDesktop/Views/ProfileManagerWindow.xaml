@@ -17,6 +17,7 @@
 
         <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
             <Button Content="New" Width="70" Click="NewProfile_Click" Margin="5,0"/>
+            <Button Content="Edytuj" Width="70" Height="30" Margin="5,0" Click="EditProfile_Click"/>
             <Button Content="Delete" Width="70" Click="DeleteProfile_Click" Margin="5,0" Background="#FFFFEBEB"/>
             <Separator Width="20" Visibility="Hidden"/>
             <Button Content="Load" Width="80" Click="LoadProfile_Click" FontWeight="Bold"/>

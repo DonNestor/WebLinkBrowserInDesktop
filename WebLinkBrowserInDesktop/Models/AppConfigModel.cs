@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
+﻿
 namespace WebLinkBrowserInDesktop.Models
 {
-    public class AppConfig
+    public class AppConfigModel
     {
         public string DatabasePath { get; set; }
         public string LastUser { get; set; } = "Default user";

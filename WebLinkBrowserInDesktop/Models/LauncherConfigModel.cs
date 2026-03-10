@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
+﻿
 namespace WebLinkBrowserInDesktop.Models
 {
-    public class LauncherConfig
+    public class LauncherConfigModel
     {
         public string LastActiveProfilePath { get; set; }
     }

@@ -27,7 +27,6 @@ namespace WebLinkBrowserInDesktop.Views
                 Links = new WebLinkModel();
             }
         }
-
         private void Save_Click(object sender, RoutedEventArgs e)
         {
             string url = txtUrl.Text.Trim();
@@ -50,7 +49,6 @@ namespace WebLinkBrowserInDesktop.Views
             
             this.DialogResult = true;
         }
-
         private void Cancel_Click(object sender, RoutedEventArgs e)
         {
             this.DialogResult = false;
