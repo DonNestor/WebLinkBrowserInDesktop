@@ -21,60 +21,43 @@ namespace WebLinkBrowserInDesktop
         {
             base.OnStartup(e);
 
-            //Path and profile configuration
-            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-            string templateDir = Path.Combine(baseDir, "Templates");
-            string profileDir = Path.Combine(baseDir, "Profiles");
-            string databaseDir = Path.Combine(baseDir, "Db");
-            string activeProfileFile = Path.Combine(baseDir, "active_profile.txt");
+            AppPaths.EnsureDirectoriesExist(); // Ensure the main directories exist before we do anything else
 
-            Directory.CreateDirectory(templateDir);
-            Directory.CreateDirectory(profileDir);
-            Directory.CreateDirectory(databaseDir);
-
-            string templateDbPath = Path.Combine(templateDir, "empty_template.db");
-            if (!File.Exists(templateDbPath))
+            // Ensure the template database exists. This is a blank database with the correct schema that we can copy for new profiles.
+            if (!File.Exists(AppPaths.TemplateDbFile))
             {
                 var tempService = new DatabaseService(); // Create a temporary instance of the DatabaseService to initialize the template database with the correct schema.
-                tempService.Initialize(templateDbPath); //Create the file and initialize it with the correct schema
-                tempService.CloseConection(); //Close immediately since we just want to create the file with the correct schema. The MainWindow will create its own connection to this file when needed.
+                tempService.Initialize(AppPaths.TemplateDbFile); //Create the file and initialize it with the correct schema
+                tempService.CloseConnection(); //Close immediately since we just want to create the file with the correct schema. The MainWindow will create its own connection to this file when needed.
             }
-
-            string templateConfigPath = Path.Combine(templateDir, "default_template.json");
-            if (!File.Exists(templateConfigPath))
+            
+            //ensure the template config exists. This is a blank config with default values that we can copy for new profiles.
+            if (!File.Exists(AppPaths.TemplateConfigFile))
             {
                 var defaultConfig = new AppConfigModel
                 {
+                    DatabasePath = AppPaths.TemplateDbFile,
                     LastUser = "New user"
                 };
-                FileHelper.SafeWriteConfig(templateConfigPath, defaultConfig);
-
+                FileHelper.SafeWriteConfig(AppPaths.TemplateConfigFile, defaultConfig);
             }
 
-            //By default, we set the configuration path to "default.json" in the Profiles folder
-            _configPath = Path.Combine(profileDir, "default.json");
+            bool showSelectionWindow = true;
+            LauncherConfigModel launcherState = null;
 
-            //Attempting to load the last profile from active_profile.txt
-            if (File.Exists(activeProfileFile))
+            //Read the launcher state from active_profile.txt to determine if we should show the profile selection window or directly load the last profile
+            if (File.Exists(AppPaths.ActiveProfileFile))
             {
                 try
                 {
-                    string fileContent = File.ReadAllText(activeProfileFile);
-                    var launcherState = JsonConvert.DeserializeObject<LauncherConfigModel>(fileContent);
+                    string launcherJson = File.ReadAllText(AppPaths.ActiveProfileFile);
+                    launcherState = JsonConvert.DeserializeObject<LauncherConfigModel>(launcherJson);
 
-                    if (launcherState != null && File.Exists(launcherState.LastActiveProfilePath))
+                    //If user has chosen to always load the last profile and the last active profile path exists, load it directly without showing the selection window
+                    if (launcherState != null && launcherState.AlwaysLoadLastProfile && File.Exists(launcherState.LastActiveProfilePath))
                     {
                         _configPath = launcherState.LastActiveProfilePath;
-                        // If successful, we end the check in this block
-                        goto ConfigurationLoaded;
-                    }
-
-
-                    // Attempting to read as "bare track" (backward compatibility)
-                    string rawPath = fileContent.Trim();
-                    if (File.Exists(rawPath))
-                    {
-                        _configPath = rawPath;
+                        showSelectionWindow = false;
                     }
                 }
                 catch (Exception)
@@ -88,30 +71,22 @@ namespace WebLinkBrowserInDesktop
                 }
             }
 
-            ConfigurationLoaded: // Label for goto to jump out of nests on success
-
-            LoadOrCreateConfig();
-
-            // Check if the database path is set and valid, if not, show the first run window
-            if (string.IsNullOrEmpty(_config.DatabasePath) || !File.Exists(_config.DatabasePath))
+            if (showSelectionWindow)
             {
-                var newProfileWindow = new NewProfileWindow();
+                var selectionWindow = new ProfileManagerWindow();
 
-                if (newProfileWindow.ShowDialog() == true)
+                if (selectionWindow.ShowDialog() == true)
                 {
-                    _config.DatabasePath = newProfileWindow.CreatedConfigPath;
+                    //Save the selected profile path
+                    _configPath = selectionWindow.SelectedProfilePath;
 
-                    string json = File.ReadAllText(_configPath);
-                    _config = JsonConvert.DeserializeObject<AppConfigModel>(json) ?? new AppConfigModel();
-
-                    var launcherState = new LauncherConfigModel
+                    //Save the selected profile path to active_profile.txt for next time
+                    launcherState = new LauncherConfigModel
                     {
-                        LastActiveProfilePath = _configPath
+                        LastActiveProfilePath = _configPath,
+                        AlwaysLoadLastProfile = selectionWindow.RememberProfile
                     };
-                    FileHelper.SafeWriteConfig(Path.Combine(baseDir, "avtive_profile.json"), JsonConvert.SerializeObject(launcherState));
-
-                    // Save the selected path to config.json
-                    SaveConfig();
+                    FileHelper.SafeWriteConfig(AppPaths.ActiveProfileFile, launcherState);
                 }
                 else
                 {
@@ -120,16 +95,22 @@ namespace WebLinkBrowserInDesktop
                     return;
                 }
             }
-            
+
+            //Start the main window with the loaded or default config
             try
             {
-                string dbDirectory = Path.GetDirectoryName(_config.DatabasePath);
+                //Load the selected profile's config into memory
+                string json = File.ReadAllText(_configPath);
+
+                string dbDirectory = Path.GetDirectoryName(_configPath);
+
                 // Ensure the directory for the database exists
                 if (!string.IsNullOrEmpty(dbDirectory) && !Directory.Exists(dbDirectory))
                 {
                     Directory.CreateDirectory(dbDirectory);
                 }
 
+                _config = JsonConvert.DeserializeObject<AppConfigModel>(json) ?? new AppConfigModel(); // If deserialization fails, we create a new config with default values to avoid null reference exceptions later on.
                 _databaseService = new DatabaseService();
                 _databaseService.Initialize(_config.DatabasePath);
 
@@ -174,7 +155,7 @@ namespace WebLinkBrowserInDesktop
 
                 if (fileName.Contains("template") || fileName == "default.json")
                 {
-                    System.Diagnostics.Debug.WriteLine("Skipping saving for templates or default config"); 
+                    System.Diagnostics.Debug.WriteLine("Skipping saving for templates or default config");
                     return; // Don't save if it's a template or default config
                 }
 
@@ -189,7 +170,7 @@ namespace WebLinkBrowserInDesktop
         protected override void OnExit(ExitEventArgs e)
         {
             // Check if the service has been created (the question mark protects against an error if it were null)
-            _databaseService?.CloseConection(); //Closing the base upon exit
+            _databaseService?.CloseConnection(); //Closing the base upon exit
 
             base.OnExit(e);
         }

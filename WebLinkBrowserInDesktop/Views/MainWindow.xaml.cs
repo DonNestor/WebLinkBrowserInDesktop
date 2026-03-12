@@ -96,13 +96,6 @@ namespace WebLinkBrowserInDesktop
                 var allCategories = _databaseService.GetAllCategories();
                 var allLinks = _databaseService.GetAllLinks();
 
-                //var allNodes = allCategories.Select(c => new CategoryModel
-                //{
-                //    Id = c.Id,
-                //    Name = c.Name,
-                //    ParentId = c.ParentId,
-                //}).ToList();
-
                 var rootItems = new ObservableCollection<object>();
 
                 foreach (var link in allLinks)
@@ -180,7 +173,6 @@ namespace WebLinkBrowserInDesktop
             if (_selectedCategoryId.HasValue)
             {
                 var filterLinks = allLinks.Where(l => l.CategoryId == _selectedCategoryId.Value).ToList();
-                //LinksListBox.ItemsSource = ;
             }
         }
         private void ReloadAppLicationState()
@@ -201,9 +193,7 @@ namespace WebLinkBrowserInDesktop
                 }
 
                 LoadCategoriesTree();
-
                 RefreshLinkList();
-
                 UpdateTitle(); 
             }
             catch (Exception ex)
@@ -229,13 +219,11 @@ namespace WebLinkBrowserInDesktop
         private void Go_Click(object sender, RoutedEventArgs e)
         {
             BrowseManually();
-            //LoadUrlIntoBrowser(txtCurrentUrl.Text);
         }
         private void txtCurrentUrl_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
             if (e.Key == System.Windows.Input.Key.Enter)
             {
-                //LoadUrlIntoBrowser(txtCurrentUrl.Text);
                 BrowseManually();
             }
         }
@@ -369,11 +357,10 @@ namespace WebLinkBrowserInDesktop
 
                 try
                 {
-                    _databaseService.CloseConection();
+                    _databaseService.CloseConnection();
 
                     _currentConfig.DatabasePath = newDbPath;
-                    string configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.json");
-                    FileHelper.SafeWriteConfig(configPath, _currentConfig);
+                    FileHelper.SafeWriteConfig(AppPaths.ActiveProfileFile, _currentConfig);
 
                     _databaseService.Initialize(newDbPath);
 
@@ -389,43 +376,50 @@ namespace WebLinkBrowserInDesktop
         }
         private void ProfileManager_Click(object sender, RoutedEventArgs e)
         {
-            var profileWindow = new ProfileManagerWindow();
-            profileWindow.Owner = this;
 
-            if (profileWindow.ShowDialog() == true)
+            _databaseService.CloseConnection(); // Close current database connection before switching profiles
+
+            var selectionWindow = new ProfileManagerWindow();
+            selectionWindow.Owner = this;
+
+            if (selectionWindow.ShowDialog() == true)
             {
-                LoadProfile(profileWindow.SelectedProfilePath);
+                try
+                {
+                    var launcherState = new LauncherConfigModel()
+                    {
+                        LastActiveProfilePath = selectionWindow.SelectedProfilePath,
+                        AlwaysLoadLastProfile = selectionWindow.RememberProfile
+                    };
+                    FileHelper.SafeWriteConfig(AppPaths.ActiveProfileFile, launcherState);
+
+                    LoadProfile(selectionWindow.SelectedProfilePath);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error saving profile selection: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+            else
+            {
+                // If user canceled profile selection, re-initialize database connection with current config to ensure app remains functional
+                _databaseService.Initialize(_currentConfig.DatabasePath);
             }
         }
         private void LoadProfile(string configPath)
         {
             try
             {
-                string baseDir = AppDomain.CurrentDomain.BaseDirectory;
                 string jsonContent = File.ReadAllText(configPath);
-                var newConfig = JsonConvert.DeserializeObject<AppConfigModel>(jsonContent);
+                _currentConfig = JsonConvert.DeserializeObject<AppConfigModel>(jsonContent);
 
-                if (newConfig == null)
+                if (_currentConfig == null)
                 {
                     throw new Exception("Empty config file.");
                 }
 
-                _databaseService.CloseConection();
-
-                //Changing reference to new config object loaded from selected profile
-                _currentConfig = newConfig;
-
                 //Initialize now database connection with new path from loaded profile
                 _databaseService.Initialize(_currentConfig.DatabasePath);
-
-                var launcherConfig = new LauncherConfigModel()
-                {
-                    LastActiveProfilePath = configPath
-                };
-
-                //Save state to file active_profile.txt - to remember which profile to load next time
-                string activeProfileInfo = Path.Combine(baseDir, "active_profile.txt");
-                FileHelper.SafeWriteConfig(activeProfileInfo, launcherConfig);
 
                 ReloadAppLicationState();
 
@@ -458,8 +452,7 @@ namespace WebLinkBrowserInDesktop
             {
                 try
                 {
-                    string configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.json");
-                    FileHelper.SafeWriteConfig(configPath, _currentConfig);
+                    FileHelper.SafeWriteConfig(AppPaths.ActiveProfileFile, _currentConfig);
 
                     UpdateTitle();
                     MessageBox.Show("The configuration has been saved.");

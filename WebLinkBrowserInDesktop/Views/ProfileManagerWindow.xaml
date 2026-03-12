@@ -1,26 +1,42 @@
 ﻿<Window x:Class="WebLinkBrowserInDesktop.Views.ProfileManagerWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d"
-        Title="Profile Manager" Height="300" Width="400" WindowStartupLocation="CenterOwner">
+        Title="Select Profile" Height="300" Width="400" WindowStartupLocation="CenterScreen" ResizeMode="NoResize">
     <Grid Margin="15">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <GroupBox Header="Profiles">
-            <ListBox x:Name="ProfilesListBox" d:ItemsSource="{d:SampleData ItemCount=5}"/>
-        </GroupBox>
+        <TextBlock Text="Select an existing profile or create a new one:" FontWeight="Bold" Margin="0,0,0,10"/>
 
-        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
-            <Button Content="New" Width="70" Click="NewProfile_Click" Margin="5,0"/>
-            <Button Content="Edytuj" Width="70" Height="30" Margin="5,0" Click="EditProfile_Click"/>
-            <Button Content="Delete" Width="70" Click="DeleteProfile_Click" Margin="5,0" Background="#FFFFEBEB"/>
-            <Separator Width="20" Visibility="Hidden"/>
-            <Button Content="Load" Width="80" Click="LoadProfile_Click" FontWeight="Bold"/>
-        </StackPanel>
+        <Grid Grid.Row="1" Margin="0,0,0,15">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="100"/>
+            </Grid.ColumnDefinitions>
+
+            <ListBox x:Name="lstProfiles" Grid.Column="0" DisplayMemberPath="Name" SelectedValuePath="FullPath" Margin="0,0,10,0"/>
+
+            <StackPanel Grid.Column="1" VerticalAlignment="Top">
+                <Button Content="Edit name" Height="25" Margin="0,0,0,5" Click="RenameProfile_Click"/>
+                <Button Content="Delete profile" Height="25" Foreground="Red" Click="DeleteProfile_Click"/>
+            </StackPanel>
+        </Grid>
+        
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <CheckBox x:Name="chkRememberProfile" Content="Remember this profile" VerticalAlignment="Center" Grid.Column="0" />
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button Content="Create New..." Width="100" Height="30" Click="CreateNew_Click" Margin="0,0,10,0"/>
+                <Button Content="Load Selected" Width="100" Height="30" Click="LoadSelected_Click" FontWeight="Bold"/>
+            </StackPanel>
+        </Grid>
     </Grid>
 </Window>

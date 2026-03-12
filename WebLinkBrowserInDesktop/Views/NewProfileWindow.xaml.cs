@@ -74,27 +74,13 @@ namespace WebLinkBrowserInDesktop.Views
 
             try
             {
-                string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-                string databaseDir = Path.Combine(baseDir, "Db");
-                string profilesDir = Path.Combine(baseDir, "Profiles");
-
-                if (!Directory.Exists(databaseDir))
-                {
-                    Directory.CreateDirectory(databaseDir);
-                }
-
-                if (!Directory.Exists(profilesDir))
-                {
-                    Directory.CreateDirectory(profilesDir);
-                }
-
-                string templateConfig = Path.Combine(baseDir, "Templates", "default_template.json");
-                string newDbPath = Path.Combine(baseDir, "Db", $"{name}.db");
-                string newConfigPath = Path.Combine(baseDir, "Profiles", $"{name}.json");
+                string newDbPath = Path.Combine(AppPaths.DatabaseDir, $"{name}.db");
+                string newConfigPath = Path.Combine(AppPaths.ProfileDir, $"{name}.json");
 
                 if (File.Exists(newConfigPath))
                 {
                     MessageBox.Show("A profile with this name already exists. Please choose another name.");
+                    return; 
                 }
 
                 string sourceDbPath;
@@ -108,10 +94,10 @@ namespace WebLinkBrowserInDesktop.Views
                 }
                 else
                 {
-                    sourceDbPath = Path.Combine(baseDir, "Templates", "enpty_template.db");
+                    sourceDbPath = AppPaths.TemplateDbFile;
                     if (!File.Exists(sourceDbPath))
                     {
-                        throw new Exception("Missing database template file (Templates/empty template.db).");
+                        throw new Exception($"Missing database template file:\n{sourceDbPath}");
                     }
                 }
 
@@ -120,9 +106,9 @@ namespace WebLinkBrowserInDesktop.Views
 
                 // Create the new configuration based on the template or default values
                 AppConfigModel newConfig;
-                if (File.Exists(templateConfig))
+                if (File.Exists(AppPaths.TemplateConfigFile))
                 {
-                    newConfig = JsonConvert.DeserializeObject<AppConfigModel>(File.ReadAllText(templateConfig));
+                    newConfig = JsonConvert.DeserializeObject<AppConfigModel>(File.ReadAllText(AppPaths.TemplateConfigFile));
                 }
                 else
                 {

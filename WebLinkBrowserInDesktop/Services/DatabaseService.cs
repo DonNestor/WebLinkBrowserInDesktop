@@ -23,7 +23,7 @@ namespace WebLinkBrowserInDesktop.Services
         }
         public void Initialize(string dbPath)
         {
-            CloseConection();
+            CloseConnection();
             string connectionString = $"Data Source={dbPath}";
 
             _connection = new SqliteConnection(connectionString);
@@ -64,7 +64,7 @@ namespace WebLinkBrowserInDesktop.Services
                 //for logging
             }
         }
-        public void CloseConection()
+        public void CloseConnection()
         {
             if (_connection != null)
             {
@@ -79,6 +79,8 @@ namespace WebLinkBrowserInDesktop.Services
                     // Destroy the object (we release resources)
                     _connection.Dispose();
                     _connection = null;
+
+                    SqliteConnection.ClearAllPools(); // Clear connection pools to ensure all connections are closed
 
                     //Force garbage collection to ensure SQLite releases the file. 
                     // This helps with "Database is locked" errors when switching quickly.
